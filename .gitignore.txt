@@ -1,0 +1,20 @@
+# Environment configuration
+.env
+
+# Log files
+error.log
+
+# Python compiled files and caches
+*.pyc
+__pycache__/
+UnitTest/__pycache__/
+routes/__pycache__/
+
+# Virtual environment directory
+neuralyai/
+
+# Miscellaneous
+TODO.txt
+Backend_breakout.docx
+~$ckend_breakout.docx
+
