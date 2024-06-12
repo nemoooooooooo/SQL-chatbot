@@ -8,7 +8,7 @@ Created on Wed Jun 12 21:06:52 2024
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from DbConnection import db
-from routes import api_keys, create_session
+from routes import api_keys, create_session, rename_session
 from dotenv import load_dotenv
 import logging
 
@@ -21,7 +21,7 @@ app = FastAPI()
 # Include routers
 app.include_router(api_keys.router)
 app.include_router(create_session.router)
-
+app.include_router(rename_session.router)
 
 # Configure CORS settings
 origins = ["*"]  # Allow requests from all origins
