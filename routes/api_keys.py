@@ -49,11 +49,10 @@ async def update_api_key(request: UpdateKeyRequest, db=Depends(get_db)) -> Updat
             raise ValueError("Invalid OpenAI key format.")
             
         # Validate Fireworks key format
-        if request.fireworks_key and not re.match("^[a-zA-Z0-9]{40}$", request.fireworks_key):
+        if request.fireworks_key and not re.match("^[a-zA-Z0-9]{48}$", request.fireworks_key):
             logging.error(f"Invalid Fireworks key format for user {request.user_id}.")
             raise ValueError("Invalid Fireworks key format.")
-
-        
+                
             
         # Attempt to update the database
         result = await db.API_keys.update_one(
