@@ -8,20 +8,24 @@ Created on Wed Jun 12 21:06:52 2024
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from DbConnection import db
-from routes import api_keys, create_session, rename_session
+from routes import create_agent, create_session, chat
 from dotenv import load_dotenv
 import logging
+from agent_manager import agent_manager
+from session_manager import session_manager
+from CONTROL_VAR import llm_api_key
 
 
 load_dotenv()
+
 
 app = FastAPI()
 
 
 # Include routers
-app.include_router(api_keys.router)
+app.include_router(create_agent.router)
 app.include_router(create_session.router)
-app.include_router(rename_session.router)
+app.include_router(chat.router)
 
 # Configure CORS settings
 origins = ["*"]  # Allow requests from all origins
@@ -49,13 +53,24 @@ async def startup_event():
     
     if "users" not in collections:
         await db.create_collection("users")
-    if "API_keys" not in collections:
-        await db.create_collection("API_keys")
         
     
     await db.users.create_index([("user_id", 1)], unique=True)
-    await db.API_keys.create_index([("user_id", 1)], unique=True)
-    
+    await db.users.create_index([("agents.agent_id", 1), ("user_id", 1)], unique=True)
+    await db.users.create_index([("sessions.session_id", 1), ("sessions.agent_id", 1), ("user_id", 1)], unique=True)
+
+
+    # Load agents from MongoDB
+    agents = await db.users.find({"agents": {"$exists": True}}).to_list(length=None)
+    for user in agents:
+        for agent in user["agents"]:
+            agent_manager.add_agent(agent["agent_id"], agent["db"], llm_api_key)
+
+    # Load sessions from MongoDB
+    sessions = await db.users.find({"sessions": {"$exists": True}}).to_list(length=None)
+    for user in sessions:
+        for session in user["sessions"]:
+            session_manager.add_session(session["session_id"], session["agent_id"])
 
 
 @app.on_event("shutdown")
@@ -66,3 +81,18 @@ async def shutdown_event():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
