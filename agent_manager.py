@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 16 00:53:24 2024
-
-@author: Nimra Noor
-"""
-
-
-
 from typing import Dict, Any
 from langchain_community.utilities import SQLDatabase
 from langchain.llms import OpenAI
@@ -21,6 +12,7 @@ import re
 import logging
 from CONTROL_VAR import system_message, answer_prompt_template
 from datetime import datetime
+from session_manager import session_manager
 
 
 
@@ -85,5 +77,6 @@ class AgentManager:
         with self.lock:
             if agent_id in self.agents:
                 del self.agents[agent_id]
+                session_manager.remove_sessions_by_agent(agent_id)
 
 agent_manager = AgentManager()

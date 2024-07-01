@@ -33,3 +33,9 @@ redis_url = "redis://localhost:6379"
 MAX_PAIRS_IN_MEMORY = 5
 
 MAX_TOKENS = 800
+
+mysql_host = "localhost"
+
+mysql_user= "root"
+
+mysql_password = "12345678"

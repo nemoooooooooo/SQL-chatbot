@@ -12,6 +12,8 @@ import logging
 from DbConnection import get_db
 from pymongo.errors import ConnectionFailure, PyMongoError, OperationFailure
 from fastapi import APIRouter
+from session_manager import session_manager
+
 
 
 router = APIRouter()
@@ -55,6 +57,9 @@ async def delete_session(request: DeleteSessionRequest, db=Depends(get_db)) -> D
         if result.modified_count == 0:
             logging.error(f"Failed to delete session {request.session_id} for user {request.user_id}.")
             raise ValueError("Failed to delete session.")
+            
+        if session_manager.get_session(request.session_id):
+            session_manager.remove_session(request.session_id)
 
         return DeleteSessionResponse(
             session_id=request.session_id,

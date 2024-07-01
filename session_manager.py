@@ -45,7 +45,11 @@ class SessionManager:
             if session_id in self.sessions:
                 del self.sessions[session_id]
                 
-                
+    def remove_sessions_by_agent(self, agent_id: str):
+        with self.lock:
+            sessions_to_remove = [session_id for session_id, session in self.sessions.items() if session["agent_id"] == agent_id]
+            for session_id in sessions_to_remove:
+                del self.sessions[session_id]
 
 
 session_manager = SessionManager(redis_url)

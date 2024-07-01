@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from DbConnection import db
 from routes import create_agent, create_session, chat
+from routes.database import router as database_router
 from dotenv import load_dotenv
 import logging
 from agent_manager import agent_manager
@@ -26,6 +27,7 @@ app = FastAPI()
 app.include_router(create_agent.router)
 app.include_router(create_session.router)
 app.include_router(chat.router)
+app.include_router(database_router, prefix="/database")
 
 # Configure CORS settings
 origins = ["*"]  # Allow requests from all origins

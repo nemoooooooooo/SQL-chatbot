@@ -8,6 +8,15 @@ Created on Sat Jun 29 19:04:46 2024
 import redis
 import tiktoken
 import json
+import pymysql
+from pymongo.errors import PyMongoError
+from CONTROL_VAR import mysql_host, mysql_user, mysql_password
+from DbConnection import db
+import pandas as pd
+import sqlparse
+from typing import Any, Union
+import io
+import logging
 
 
 def num_tokens_from_string(string: str) -> int:
@@ -23,8 +32,6 @@ def num_tokens_from_string(string: str) -> int:
 
 
 def ensure_memory_limits(max_pairs, max_tokens, user_memory_key):
-    
-        
         
         # Connect to Redis
         r = redis.Redis()
@@ -67,4 +74,82 @@ def ensure_memory_limits(max_pairs, max_tokens, user_memory_key):
         print("Memory successfully limited")
         
 
-    
+
+# MySQL connection utility
+def get_mysql_connection(database: str = None):
+    connection = pymysql.connect(
+        host=mysql_host,
+        user=mysql_user,
+        password=mysql_password,
+        database=database
+    )
+    return connection
+
+def create_mysql_database(db_name: str):
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE DATABASE `{db_name}`")
+        connection.commit()
+    finally:
+        connection.close()
+
+def drop_mysql_database(db_name: str):
+    connection = get_mysql_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"DROP DATABASE `{db_name}`")
+        connection.commit()
+    finally:
+        connection.close()
+
+def execute_mysql_query(db_name: str, query: str):
+    connection = get_mysql_connection(db_name)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+        connection.commit()
+    finally:
+        connection.close()
+
+def record_db_in_mongo(user_id: str, db_name: str):
+    try:
+        db.users.update_one(
+            {"user_id": user_id},
+            {"$push": {"databases": db_name}}
+        )
+    except PyMongoError as e:
+        raise e
+
+def remove_db_from_mongo(user_id: str, db_name: str):
+    try:
+        db.users.update_one(
+            {"user_id": user_id},
+            {"$pull": {"databases": db_name}}
+        )
+    except PyMongoError as e:
+        raise e
+
+def create_db_from_csv(user_id: str, db_name: str, csv_file: Any):
+    df = pd.read_csv(csv_file)
+    create_mysql_database(db_name)
+    connection = get_mysql_connection(db_name)
+    try:
+        df.to_sql(name='table_name', con=connection, index=False, if_exists='replace')
+    finally:
+        connection.close()
+    record_db_in_mongo(user_id, db_name)
+
+def create_db_from_sql(user_id: str, db_name: str, sql_file: Any):
+    create_mysql_database(db_name)
+    sql_script = sql_file.read().decode()
+    connection = get_mysql_connection(db_name)
+    try:
+        with connection.cursor() as cursor:
+            for statement in sqlparse.split(sql_script):
+                if statement.strip():
+                    cursor.execute(statement)
+        connection.commit()
+    finally:
+        connection.close()
+    record_db_in_mongo(user_id, db_name)
