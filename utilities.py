@@ -14,9 +14,7 @@ from CONTROL_VAR import mysql_host, mysql_user, mysql_password
 from DbConnection import db
 import pandas as pd
 import sqlparse
-from typing import Any, Union
-import io
-import logging
+from typing import Any
 
 
 def num_tokens_from_string(string: str) -> int:
@@ -129,6 +127,33 @@ def remove_db_from_mongo(user_id: str, db_name: str):
         )
     except PyMongoError as e:
         raise e
+        
+def create_table(db_name: str, table_name: str, columns: str):
+    connection = get_mysql_connection(db_name)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE TABLE `{table_name}` ({columns})")
+        connection.commit()
+    finally:
+        connection.close()
+
+def add_column(db_name: str, table_name: str, column_definition: str):
+    connection = get_mysql_connection(db_name)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN {column_definition}")
+        connection.commit()
+    finally:
+        connection.close()
+
+def add_entry(db_name: str, table_name: str, columns: str, values: str):
+    connection = get_mysql_connection(db_name)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"INSERT INTO `{table_name}` ({columns}) VALUES ({values})")
+        connection.commit()
+    finally:
+        connection.close()
 
 def create_db_from_csv(user_id: str, db_name: str, csv_file: Any):
     df = pd.read_csv(csv_file)
