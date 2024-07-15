@@ -9,6 +9,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from DbConnection import db
 from routes import create_agent, create_session, chat
+from routes.login import router as login_router
+from routes.register import router as register_router
 from routes.database import router as database_router
 from dotenv import load_dotenv
 import logging
@@ -28,6 +30,8 @@ app.include_router(create_agent.router)
 app.include_router(create_session.router)
 app.include_router(chat.router)
 app.include_router(database_router, prefix="/database")
+app.include_router(register_router, prefix="/auth")
+app.include_router(login_router, prefix="/auth")
 
 # Configure CORS settings
 origins = ["*"]  # Allow requests from all origins
@@ -60,6 +64,8 @@ async def startup_event():
     await db.users.create_index([("user_id", 1)], unique=True)
     await db.users.create_index([("agents.agent_id", 1), ("user_id", 1)], unique=True)
     await db.users.create_index([("sessions.session_id", 1), ("sessions.agent_id", 1), ("user_id", 1)], unique=True)
+    await db.users.create_index([("username", 1)], unique=True)
+    await db.users.create_index([("email", 1)], unique=True)
 
 
     # Load agents from MongoDB

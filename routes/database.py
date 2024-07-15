@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Query
 from pydantic import BaseModel, UUID4, Field
 from utilities import (
     create_mysql_database, drop_mysql_database, execute_mysql_query,
@@ -236,7 +236,7 @@ async def add_entry_endpoint(request: AddEntryRequest, db=Depends(get_db)):
 @router.post("/create_database_from_csv")
 async def create_database_from_csv(
     user_id: UUID4,
-    db_name: str = Field(..., regex=r'^[a-zA-Z0-9_]+$'),
+    db_name: str = Query(..., pattern=r'^[a-zA-Z0-9_]+$'),
     file: UploadFile = File(...)
 ):
     try:
@@ -250,7 +250,7 @@ async def create_database_from_csv(
 @router.post("/create_database_from_sql")
 async def create_database_from_sql(
     user_id: UUID4,
-    db_name: str = Field(..., regex=r'^[a-zA-Z0-9_]+$'),
+    db_name: str = Query(..., pattern=r'^[a-zA-Z0-9_]+$'),
     file: UploadFile = File(...)
 ):
     try:
